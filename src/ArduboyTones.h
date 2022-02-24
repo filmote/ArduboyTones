@@ -39,7 +39,12 @@ THE SOFTWARE.
 #ifndef ARDUBOY_TONES_H
 #define ARDUBOY_TONES_H
 
+#define TONES_FX
+
 #include <Arduino.h>
+#ifdef TONES_FX
+#include <ArduboyFX.h>
+#endif
 
 // ************************************************************
 // ***** Values to use as function parameters in sketches *****
@@ -78,6 +83,11 @@ THE SOFTWARE.
  * what's encoded in the frequencies
  */
 #define VOLUME_ALWAYS_HIGH 2
+
+#ifdef TONES_FX
+#define TONES_MODE_NORMAL 0
+#define TONES_MODE_FX     1
+#endif
 
 // ************************************************************
 
@@ -161,6 +171,18 @@ class ArduboyTones
    * tone, so it should be as fast as possible.
    */
   ArduboyTones(bool (*outEn)());
+
+  /** \brief
+   * The ArduboyTones class constructor.
+   *
+   * \param outEn A function which returns a boolean value of `true` if sound
+   * should be played or `false` if sound should be muted. This function will
+   * be called from the timer interrupt service routine, at the start of each
+   * tone, so it should be as fast as possible.
+   */
+  #ifdef TONES_FX  
+  ArduboyTones(bool (*outEn)(), uint16_t *tonesBufferFX, uint8_t tonesBufferLen);
+  #endif
 
   /** \brief
    * Play a single tone.
@@ -251,6 +273,27 @@ class ArduboyTones
    * altering the contents of the array is required.
    */
   static void tonesInRAM(uint16_t *tones);
+
+  /** \brief
+   * Play a tone sequence from the FX chip.
+   *
+   * \details
+   *  Play a tone sequence from the FX chip.
+   */
+  #ifdef TONES_FX 
+  static void tonesFromFX(uint24_t tones);
+  #endif
+
+  /** \brief
+   * Fill the FX buffer with data.
+   *
+   * \details
+   *  Fill the FX buffer with data.  This should be placed at the start of the
+   *  main game loop, typically after 'if (!arduboy.nextFrame()) return;'.
+   */
+  #ifdef TONES_FX 
+  static void fillBufferFromFX();
+  #endif
 
   /** \brief
    * Stop playing the tone or sequence.
