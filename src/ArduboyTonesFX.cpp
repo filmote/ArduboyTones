@@ -59,7 +59,7 @@ static volatile uint16_t toneSequence[MAX_TONES * 2 + 1];
 static volatile bool inProgmem;
 
 static volatile uint24_t tonesBufferFX_Start;
-static volatile uint24_t tonesBufferFX_Index;
+static volatile uint24_t tonesBufferFX_Curr;
 static volatile uint16_t *tonesBufferFX;
 static uint8_t tonesBufferFX_Len;
 static uint8_t tonesBufferFX_Head;
@@ -161,7 +161,7 @@ void ArduboyTonesFX::tonesInRAM(uint16_t *tones)
 void ArduboyTonesFX::tonesFromFX(uint24_t tones)
 {
   inProgmem = false;
-  tonesBufferFX_Start = tonesBufferFX_Index = tones; // set to start of sequence array
+  tonesBufferFX_Start = tonesBufferFX_Curr = tones; // set to start of sequence array
   toneMode = TONES_MODE_FX;
   tonesBufferFX_Head = 0;
   tonesBufferFX_Tail = -1;
@@ -179,18 +179,18 @@ void ArduboyTonesFX::fillBufferFromFX()
 
       uint8_t head = tonesBufferFX_Head;
 
-      FX::seekData(tonesBufferFX_Index);
+      FX::seekData(tonesBufferFX_Curr);
 
       while ((head % tonesBufferFX_Len) != tonesBufferFX_Tail) {
         uint16_t t = FX::readPendingUInt16();
         tonesBufferFX[head % tonesBufferFX_Len] = t;
         head++;
-        tonesBufferFX_Index = tonesBufferFX_Index + 2;
+        tonesBufferFX_Curr = tonesBufferFX_Curr + 2;
 
         if (t == TONES_REPEAT) {
-          tonesBufferFX_Index = tonesBufferFX_Start;
+          tonesBufferFX_Curr = tonesBufferFX_Start;
           FX::readEnd();
-          FX::seekData(tonesBufferFX_Index);
+          FX::seekData(tonesBufferFX_Curr);
         }
 
         if (tonesBufferFX_Tail == -1) tonesBufferFX_Tail = 0;
