@@ -39,12 +39,8 @@ THE SOFTWARE.
 #ifndef ARDUBOY_TONES_H
 #define ARDUBOY_TONES_H
 
-#define TONES_FX
-
 #include <Arduino.h>
-#ifdef TONES_FX
 #include <ArduboyFX.h>
-#endif
 
 // ************************************************************
 // ***** Values to use as function parameters in sketches *****
@@ -84,10 +80,8 @@ THE SOFTWARE.
  */
 #define VOLUME_ALWAYS_HIGH 2
 
-#ifdef TONES_FX
 #define TONES_MODE_NORMAL 0
 #define TONES_MODE_FX     1
-#endif
 
 // ************************************************************
 
@@ -159,7 +153,7 @@ THE SOFTWARE.
  * The ArduboyTones class for generating tones by specifying
  * frequency/duration pairs.
  */
-class ArduboyTones
+class ArduboyTonesFX
 {
  public:
   /** \brief
@@ -170,19 +164,37 @@ class ArduboyTones
    * be called from the timer interrupt service routine, at the start of each
    * tone, so it should be as fast as possible.
    */
-  ArduboyTones(bool (*outEn)());
+  ArduboyTonesFX(bool (*outEn)());
 
   /** \brief
-   * The ArduboyTones class constructor.
+   * The ArduboyTones class constructor for use when using FX data.
    *
    * \param outEn A function which returns a boolean value of `true` if sound
    * should be played or `false` if sound should be muted. This function will
    * be called from the timer interrupt service routine, at the start of each
    * tone, so it should be as fast as possible.
+   * \param tonesBufferFX pointer to a predefined buffer of type `uint16_t[]`.
+   * \param tonesBufferLen buffer length.  Note this is the number of array 
+   * elements rather than the number of bytes it occupies,
    */
-  #ifdef TONES_FX  
-  ArduboyTones(bool (*outEn)(), uint16_t *tonesBufferFX, uint8_t tonesBufferLen);
-  #endif
+  ArduboyTonesFX(bool (*outEn)(), uint16_t *tonesBufferFX, uint8_t tonesBufferLen);
+
+  /** \brief
+   * The ArduboyTones class constructor for use when using FX data.  Overload
+   * of above.
+   *
+   * \param outEn A function which returns a boolean value of `true` if sound
+   * should be played or `false` if sound should be muted. This function will
+   * be called from the timer interrupt service routine, at the start of each
+   * tone, so it should be as fast as possible.
+   * \param tonesBufferFX pointer to a predefined buffer of type `uint16_t[]`.
+   */
+  template<size_t size>
+  ArduboyTonesFX(boolean (*enabled)(), uint16_t (&buffer)[size]) :
+    ArduboyTonesFX(enabled, buffer, size)
+  {
+    static_assert(size < 256, "Buffer too large");
+  }
 
   /** \brief
    * Play a single tone.
@@ -280,9 +292,7 @@ class ArduboyTones
    * \details
    *  Play a tone sequence from the FX chip.
    */
-  #ifdef TONES_FX 
   static void tonesFromFX(uint24_t tones);
-  #endif
 
   /** \brief
    * Fill the FX buffer with data.
@@ -291,9 +301,7 @@ class ArduboyTones
    *  Fill the FX buffer with data.  This should be placed at the start of the
    *  main game loop, typically after 'if (!arduboy.nextFrame()) return;'.
    */
-  #ifdef TONES_FX 
   static void fillBufferFromFX();
-  #endif
 
   /** \brief
    * Stop playing the tone or sequence.
